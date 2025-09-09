@@ -8,7 +8,8 @@ pipeline {
   stages {
     stage('Checkout Source') {
       steps {
-        git 'https://github.com/aayanshahirwar/my-react-frontend.git'
+        git branch: 'main', // or 'master' depending on your repo
+            url: 'https://github.com/aayanshahirwar/my-react-frontend.git'
       }
     }
 
