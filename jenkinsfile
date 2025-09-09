@@ -8,12 +8,26 @@ pipeline {
   stages {
     stage('Checkout Source') {
       steps {
-        git branch: 'main', // or 'master' depending on your repo
-            url: 'https://github.com/aayanshahirwar/my-react-frontend.git'
+        git branch: 'main', url: 'https://github.com/aayanshahirwar/my-react-frontend.git'
       }
     }
 
-    stage('Build image') {
+    // ✅ ADD THIS NEW STAGE - Build React App
+    stage('Build React App') {
+      steps {
+        script {
+          sh '''
+            echo "Installing npm dependencies..."
+            npm install
+            echo "Building React app..."
+            npm run build
+            echo "React build completed!"
+          '''
+        }
+      }
+    }
+
+    stage('Build Docker Image') {
       steps {
         script {
           dockerImage = docker.build dockerImageName
@@ -46,6 +60,7 @@ pipeline {
           serverUrl: 'https://172.20.1.43:6443'
         ) {
           sh 'kubectl apply -f deploymentservice.yaml'
+          sh 'kubectl rollout restart deployment/reactapp-deployment -n webapps'
           sh 'kubectl rollout status deployment/reactapp-deployment -n webapps --timeout=300s'
         }
       }
@@ -67,6 +82,15 @@ pipeline {
           sh 'kubectl get deployment -n webapps'
         }
       }
+    }
+  }
+
+  post {
+    failure {
+      echo 'Pipeline failed! Check the React build logs.'
+    }
+    success {
+      echo 'Pipeline completed successfully! New React app is deployed.'
     }
   }
 }
