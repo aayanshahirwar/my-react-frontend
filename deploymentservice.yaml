@@ -20,25 +20,6 @@ spec:
         image: santoshahirwar/reactstatic_test:latest
         ports:
         - containerPort: 80
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
 
 ---
 
@@ -47,14 +28,12 @@ kind: Service
 metadata:
   name: reactapp-service
   namespace: webapps
-  annotations:
-    metallb.universe.tf/address-pool: default  # Optional: specify MetalLB pool
 spec:
   selector:
     app: reactapp
   type: LoadBalancer
   ports:
   - protocol: TCP
-    port: 80      # External port (recommended instead of 5000)
+    port: 5000
     targetPort: 80
-  # Remove nodePort: 31110 - Let MetalLB assign IP automatically
+    nodePort: 31110
