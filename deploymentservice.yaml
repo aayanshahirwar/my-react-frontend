@@ -6,7 +6,7 @@ metadata:
   labels:
     app: reactapp
 spec:
-  replicas: 1
+  replicas: : : 3 
   selector:
     matchLabels:
       app: reactapp
@@ -22,7 +22,6 @@ spec:
         - containerPort: 80
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -31,9 +30,10 @@ metadata:
 spec:
   selector:
     app: reactapp
-  type: LoadBalancer
+  type: LoadBalancer   # if on cloud (AWS/GCP/Azure) or using MetalLB
   ports:
-  - protocol: TCP
-    port: 5000
-    targetPort: 80
-    nodePort: 31110
+  - name: http
+    protocol: TCP
+    port: 80           # external port (user will access this)
+    targetPort: 80     # container port
+
