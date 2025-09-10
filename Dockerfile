@@ -15,6 +15,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# ✅ Set memory limit
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 # Build React app
 RUN npm run build
 
