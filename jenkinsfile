@@ -12,17 +12,54 @@ pipeline {
       }
     }
 
-    // ✅ ADD THIS NEW STAGE - Build React App
+    // ✅ SONARQUBE ANALYSIS STAGE - Using your configured server
+    stage('SonarQube Analysis') {
+      environment {
+        scannerHome = tool 'SonarQubeScanner'  // Jenkins tool name for SonarQube scanner
+      }
+      steps {
+        withSonarQubeEnv('sonar') {  // ← USE YOUR SERVER NAME 'sonar' here
+          script {
+            sh """
+              ${scannerHome}/bin/sonar-scanner \
+              -Dsonar.projectKey=my-react-frontend \
+              -Dsonar.projectName='My React Frontend' \
+              -Dsonar.projectVersion=1.0 \
+              -Dsonar.sources=src \
+              -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/build/**,**/public/** \
+              -Dsonar.tests=src \
+              -Dsonar.test.inclusions=**/*.test.js,**/*.spec.js,**/*.test.jsx,**/*.spec.jsx \
+              -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+              -Dsonar.sourceEncoding=UTF-8 \
+              -Dsonar.language=js \
+              -Dsonar.qualitygate.timeout=300
+            """
+          }
+        }
+      }
+    }
+
     stage('Build React App') {
       steps {
         script {
           sh '''
             echo "Installing npm dependencies..."
             npm install
+            echo "Generating test coverage..."
+            npm test -- --coverage --watchAll=false || true
             echo "Building React app..."
             npm run build
             echo "React build completed!"
           '''
+        }
+      }
+    }
+
+    // ✅ QUALITY GATE CHECK
+    stage("Quality Gate") {
+      steps {
+        timeout(time: 5, unit: 'MINUTES') {
+          waitForQualityGate abortPipeline: true
         }
       }
     }
@@ -87,10 +124,10 @@ pipeline {
 
   post {
     failure {
-      echo 'Pipeline failed! Check the React build logs.'
+      echo 'Pipeline failed! Check the logs.'
     }
     success {
-      echo 'Pipeline completed successfully! New React app is deployed.'
+      echo 'Pipeline completed successfully with SonarQube analysis!'
     }
   }
 }
